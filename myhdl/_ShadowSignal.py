@@ -63,8 +63,11 @@ class _SliceSignal(_ShadowSignal):
                     right += sig._right
                 left += sig._right
             sig = sig._sig
-        if isinstance(sig, _ShadowSignal):
-            raise TypeError("_ShadowSignal not supported as sig.")
+#        if isinstance(sig, ConcatSignal):
+#            pass#TODO
+#            assert(0)
+#        if isinstance(sig, _ShadowSignal):
+#            raise TypeError("_ShadowSignal not supported as sig.")
 
         sig._slicesigs.append(self)
 
@@ -97,17 +100,32 @@ class _SliceSignal(_ShadowSignal):
             set_next(self, sig[left:right])
             yield sig
 
-    def _setName(self, hdl):
-        if self._right is None:
+    def _nameOneSig(self, hdl, sig, left, right):
+        if right is None:
             if hdl == 'Verilog':
-                self._name = "%s[%s]" % (self._sig._name, self._left)
+                return "%s[%s]" % (sig._name, left)
             else:
-                self._name = "%s(%s)" % (self._sig._name, self._left)
+                return "%s(%s)" % (sig._name, left)
         else:
             if hdl == 'Verilog':
-                self._name = "%s[%s-1:%s]" % (self._sig._name, self._left, self._right)
+                return "%s[%s-1:%s]" % (sig._name, left, right)
             else:
-                self._name = "%s(%s-1 downto %s)" % (self._sig._name, self._left, self._right)
+                return "%s(%s-1 downto %s)" % (sig._name, left, right)
+
+    def _setName(self, hdl):
+            if isinstance(self._sig, ConcatSignal):
+                if hdl == 'Verilog':
+                    self._name = "{ "
+                    sigs = self._sig._args
+                    for i, sig in enumerate(sigs):
+                        if i != 0:
+                            self._name += ", "
+                        self._name += self._nameOneSig(hdl, sig, self._left, self._right)
+                    self._name += " }"
+                else:
+                    pass#TODO
+            else:
+                self._name = self._nameOneSig(hdl, self._sig, self._left, self._right)
 
     def _markRead(self):
         self._read = True
