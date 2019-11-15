@@ -243,6 +243,10 @@ class ConcatSignal(_ShadowSignal):
             hi = lo
         return "\n".join(lines)
 
+class RConcatSignal(ConcatSignal):
+    def __init__(self, *args):
+        ConcatSignal.__init__(self, *reversed(args))
+
 
 # Tristate signal
 
